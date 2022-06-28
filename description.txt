@@ -1,0 +1,31 @@
+Description:
+
+I created a dedicated VPC (can be accessed using a VPN) with 2 Availability Zones, 2 Public Subnets for the NAT Gateway and 2 Private Subnets for the Microservices and MySQL Databases. (The Private subnets can be separated for the Microservices and DBs as an improvement).
+- The Public Subnets use Bastion (EC2) with an autoscaling group to allow the Private Subnets access to the internet on specific ports as a security measure.
+
+I used Route53 to route traffic to CloudFront.
+
+I added a WAF to prevent basic attacks and improve security.
+
+I used CloudFront to serve content from the ALB, thus reducing response times and traffic costs. 
+- CloudFront could also be used to serve static content from S3 Buckets such as images, documents, etc.
+ - Uploading this content to the S3 Buckets would be done using an asset management tool of some sort and for this reason I have not included it in the diagram.
+
+An ALB is used to balance traffic for the EC2 instances (EKS/ECS Cluster) in the different Availability Zones. 
+
+The rules in the ALB are associated with Target Groups that route traffic to the EC2 instances in the Cluster. 
+- The Health Checks configured here will be used to identify Microservice health status and guarantee service availability.
+
+The EC2 instances where the Microservices are running are part of an autoscaling group, this group can scale in or out depending on the configured schedule (time, day of the week, etc.) as well as the set desired MEM and CPU values. 
+- There should be a defined headroom as well to allow extra microservice replicas to be deployed without waiting for the cluster to scale up.
+- These EC2 instances are in private subnets but can access the internet through NAT Gateways (using Bastion) located in public subnets within each Availability Zones. 
+
+I used EFS to comply with the need to share files between Moodle nodes.
+
+I used ElasticSearch to meet Moodle’s back-end cache service requirement for storing user sessions.
+
+I set up a MySQL RDS Cluster (2 Availability Zones) with Master and Replication instances to improve disaster recovery, security and performance.
+
+Everything is monitored using CloudWatch.
+- SNS is used to send alerts to OpsGenie.
+- OpsGenie opens an alert and forwards the message to #Alerts Slack channel.
